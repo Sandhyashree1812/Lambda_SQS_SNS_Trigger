@@ -8,12 +8,30 @@ Publish messages to SNS
 Write logs to CloudWatch
 1.1 Open IAM
 In the AWS Console, search for IAM and open it.
-In the left sidebar click Roles → Create role.
+<img width="402" height="176" alt="image" src="https://github.com/user-attachments/assets/6bfe8767-7661-4981-9926-22c827c9b53d" />
+
+In the left sidebar click Roles → Create role. 
+
+<img width="206" height="223" alt="image" src="https://github.com/user-attachments/assets/3a1687ba-e6f0-499e-8272-3ae789ad8028" /> 
+
+<img width="793" height="106" alt="image" src="https://github.com/user-attachments/assets/eb77684e-906b-4156-9692-a2a09b92a153" /> 
+
+
+
+
+
 1.2 Configure the Trust Policy
+
 Field	Value
-Trusted entity type	AWS service
-Use case	Lambda
+Trusted entity type :	AWS service
+Use case	: Lambda
 Click Next.
+
+<img width="677" height="164" alt="image" src="https://github.com/user-attachments/assets/327e52f3-e9ce-47f2-841d-01a1377aaaaa" /> 
+
+<img width="740" height="169" alt="image" src="https://github.com/user-attachments/assets/aab6cea6-aa26-4630-a0ef-77f5bf31d39b" />
+
+
 
 1.3 Attach Permissions
 Search for and attach these two AWS managed policies:
