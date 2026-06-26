@@ -513,12 +513,25 @@ Click Save.
 4.6 Set Environment Variables
 Click Configuration tab → Environment variables → Edit.
 Add both variables using Add environment variable:
-Key	Value	Required
-SNS_TOPIC_ARN	ARN of OrderNotifications (copied in Step 3.1)	Yes
-ALERT_SNS_TOPIC_ARN	ARN of OrderAlerts (copied in Step 3.2)	Optional — if omitted, alerts are skipped and only CloudWatch logs are written
+
+Key	: SNS_TOPIC_ARN
+Value : 	ARN of OrderNotifications (copied in Step 3.1)	
+Required : 	Yes
+
+Key	: ALERT_SNS_TOPIC_ARN	
+Value : ARN of OrderAlerts (copied in Step 3.2)	
+Required : Optional — if omitted, alerts are skipped and only CloudWatch logs are written
 Click Save.
 
+<img width="801" height="333" alt="image" src="https://github.com/user-attachments/assets/8a4f4f63-2b85-4ce0-b34a-b77adccd082a" /> 
+
+<img width="750" height="239" alt="image" src="https://github.com/user-attachments/assets/bd86fd2c-93bc-47c9-8eee-8be18f629b22" />
+
+
+
 Why two topics? SNS_TOPIC_ARN carries business events consumed by downstream services. ALERT_SNS_TOPIC_ARN carries operational signals (success + failure) for operators and monitoring — keeping these separate means a processing failure doesn't pollute your fulfillment topic.
+
+========== 
 
 4.7 (Optional) Tune Memory and Timeout
 The defaults (128 MB memory, 3-second timeout) are fine for this project. For real workloads, adjust under Configuration → General configuration.
@@ -530,6 +543,8 @@ Receives an SQS batch of records
 Parses each record as a JSON order
 On success: publishes the processed order to OrderNotifications; publishes a SUCCESS alert to OrderAlerts
 On failure: publishes a FAILED alert to OrderAlerts with the error message and raw SQS body; returns the message ID in batchItemFailures so SQS retries only that record
+
+======================= 
 
 Step 5 — Event Source Mapping: Connect SQS to Lambda
 The event source mapping tells Lambda to poll OrderQueue and invoke OrderProcessor automatically whenever messages arrive. You do not write any polling code — AWS manages it.
