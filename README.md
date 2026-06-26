@@ -6,6 +6,8 @@ Be assumed by the Lambda service
 Read messages from SQS (and delete them after processing)
 Publish messages to SNS
 Write logs to CloudWatch
+======================== 
+
 1.1 Open IAM
 In the AWS Console, search for IAM and open it.
 <img width="402" height="176" alt="image" src="https://github.com/user-attachments/assets/6bfe8767-7661-4981-9926-22c827c9b53d" />
@@ -19,8 +21,16 @@ In the left sidebar click Roles → Create role.
 
 
 
+====================== 
 
 1.2 Configure the Trust Policy
+
+<img width="184" height="193" alt="image" src="https://github.com/user-attachments/assets/ce51ddc1-11ed-40b7-9d49-a70a71b4f102" />
+
+
+<img width="569" height="44" alt="image" src="https://github.com/user-attachments/assets/1fc1104d-bbd1-4176-a6be-046f01c65da4" /> 
+
+
 
 Field	Value
 Trusted entity type :	AWS service
@@ -31,28 +41,54 @@ Click Next.
 
 <img width="740" height="169" alt="image" src="https://github.com/user-attachments/assets/aab6cea6-aa26-4630-a0ef-77f5bf31d39b" />
 
-
+================== 
 
 1.3 Attach Permissions
 Search for and attach these two AWS managed policies:
 
-Policy name	Why
-AWSLambdaSQSQueueExecutionRole	Grants sqs:ReceiveMessage, sqs:DeleteMessage, sqs:GetQueueAttributes — the minimum for SQS triggers
-AmazonSNSFullAccess	Grants sns:Publish so Lambda can post notifications
+Policy name	: AWSLambdaSQSQueueExecutionRole	
+Why : Grants sqs:ReceiveMessage, sqs:DeleteMessage, sqs:GetQueueAttributes — the minimum for SQS triggers
+
+Policy name	: SQS triggers
+Why : Grants sns:Publish so Lambda can post notifications
+
+
 Least-privilege note: AmazonSNSFullAccess is used here for simplicity. In production, create a custom policy scoped to only sns:Publish on your specific topic ARN.
 
 Click Next.
 
+<img width="598" height="247" alt="image" src="https://github.com/user-attachments/assets/be5495db-7070-45f9-889d-6b5067a26cbe" /> 
+
+<img width="608" height="283" alt="image" src="https://github.com/user-attachments/assets/9eeff5ab-9cfa-45d3-a091-82c59db3da22" />
+
+============================== 
+
 1.4 Name the Role
-Field	Value
-Role name	OrderProcessorLambdaRole
-Description	Execution role for OrderProcessor Lambda — SQS trigger + SNS publish
-Click Create role.
+
+Field	Value :
+
+Role name : OrderProcessorLambdaRole
+Description	: Execution role for OrderProcessor Lambda — SQS trigger + SNS publish
+
+Click Create role. 
+
+<img width="588" height="77" alt="image" src="https://github.com/user-attachments/assets/5633d2c0-6a98-498a-991d-0a9cae021578" /> 
+
+<img width="417" height="164" alt="image" src="https://github.com/user-attachments/assets/4a38d4db-ff06-440a-a101-140e2c8756dc" />
+
+
+
+======================= 
 
 1.5 Note the Role ARN
 Open the role you just created.
 Copy the ARN (looks like arn:aws:iam::123456789012:role/OrderProcessorLambdaRole).
 You will paste this ARN when creating the Lambda function in Step 4.
+
+<img width="605" height="281" alt="image" src="https://github.com/user-attachments/assets/bd13e2f8-fcb0-402a-83f7-b4f226be5631" />
+
+arn:aws:lambda:us-east-1:259072552251:function:OrderProcessor
+
 
 CloudWatch Logs
 AWSLambdaSQSQueueExecutionRole already includes the logs:CreateLogGroup, logs:CreateLogStream, and logs:PutLogEvents permissions that Lambda needs to write to CloudWatch. No extra policy is needed.
@@ -68,39 +104,71 @@ Create the DLQ first because the main queue references it.
 In the AWS Console, search for SQS and open it.
 Click Create queue.
 Field	Value
-Type	Standard
-Name	OrderDLQ
+Type	: Standard
+Name	: OrderDLQ
 Leave all other settings at their defaults and click Create queue.
 
-Copy the Queue ARN for OrderDLQ — you will need it in the next section.
+<img width="659" height="130" alt="image" src="https://github.com/user-attachments/assets/27ad51e0-9ca8-48dd-b15e-6cc3138b6ab6" /> 
+
+<img width="749" height="320" alt="image" src="https://github.com/user-attachments/assets/24a62962-07b4-4f97-89da-db0927d7199c" /> 
+
+<img width="691" height="77" alt="image" src="https://github.com/user-attachments/assets/da16e158-4d0f-4e05-999d-c8aac2091b1e" />
+
+
+
+
+Copy the Queue ARN for OrderDLQ — you will need it in the next section. 
+
+arn:aws:sqs:us-east-1:259072552251:OrderDLQ
+
+============================================================== 
+
+
 2.2 Create the Main Queue (OrderQueue)
 Click Create queue again.
 Field	Value
-Type	Standard
-Name	OrderQueue
+Type	: Standard
+Name	: OrderQueue
 Scroll down to Dead-letter queue and expand it.
-Field	Value
-Dead-letter queue	Enabled
-Choose queue	OrderDLQ (paste the ARN you copied)
-Maximum receives	3
+Field	Value 
+Dead-letter queue : 	Enabled
+Choose queue	OrderDLQ (paste the ARN you copied) 
+Maximum receives	: 3
 Maximum receives = 3 means: if the same message is received and not deleted 3 times (Lambda threw an exception each time), SQS moves it to the DLQ automatically.
 
 Leave all other settings at defaults. Click Create queue.
 
+<img width="746" height="257" alt="image" src="https://github.com/user-attachments/assets/b87b66e1-9ca5-4ae1-b52b-de9c530fe1d7" />  
+
+<img width="792" height="202" alt="image" src="https://github.com/user-attachments/assets/4ab8066f-eca9-4fb7-840f-966553368cd9" /> 
+
+<img width="570" height="250" alt="image" src="https://github.com/user-attachments/assets/c426e6dd-dd77-490d-9e1c-2731f7bd0f12" />
+
+
 Copy the Queue URL and Queue ARN for OrderQueue — you will need these in later steps.
+
+URL : https://sqs.us-east-1.amazonaws.com/259072552251/OrderQueue
+AN : arn:aws:sqs:us-east-1:259072552251:OrderQueue
 
 What You Created
 OrderQueue (Standard)
   └── Dead-letter queue → OrderDLQ (maxReceiveCount: 3)
 When Lambda fails to process a message 3 times, SQS automatically moves it to OrderDLQ so it isn't lost and can be investigated.
 
-tep 3 — SNS: Create Topics and Subscribe
+========================== 
+
+Step 3 — SNS: Create Topics and Subscribe
 You will create two SNS topics:
 
-Topic	Purpose
-OrderNotifications	Business events — published on successful processing; consumed by fulfillment, inventory, etc.
-OrderAlerts	Operational alerts — published on every success AND failure; consumed by operators and monitoring tools
-Separating concerns means a failed message alert doesn't land in the same topic as a downstream fulfillment event.
+Topic	: OrderNotifications
+Purpose : Business events — published on successful processing; consumed by fulfillment, inventory, etc.
+
+Topic	: : OrderAlerts	
+Purpose : Operational alerts — published on every success AND failure; consumed by operators and monitoring tools 
+
+Separating concerns means a failed message alert doesn't land in the same topic as a downstream fulfillment event. 
+
+=============== 
 
 3.1 Create OrderNotifications Topic
 In the AWS Console, search for SNS and open it.
@@ -111,6 +179,7 @@ Name	OrderNotifications
 Click Create topic.
 
 Copy the Topic ARN — you will set this as SNS_TOPIC_ARN in the Lambda environment variables.
+
 3.2 Create OrderAlerts Topic
 Click Create topic again.
 Field	Value
@@ -119,6 +188,21 @@ Name	OrderAlerts
 Click Create topic.
 
 Copy the Topic ARN — you will set this as ALERT_SNS_TOPIC_ARN in the Lambda environment variables.
+
+<img width="775" height="131" alt="image" src="https://github.com/user-attachments/assets/52417b20-5e17-4229-8dda-7d1f55a635f9" />
+
+<img width="211" height="151" alt="image" src="https://github.com/user-attachments/assets/0153c3bd-d1c5-4e05-8152-5a4ebad33a2a" /> 
+
+<img width="789" height="312" alt="image" src="https://github.com/user-attachments/assets/38e60a66-6788-4643-8c60-77146ad9a0a0" /> 
+
+<img width="580" height="322" alt="image" src="https://github.com/user-attachments/assets/a543ded2-e648-4957-92f2-e3afd9404263" /> 
+
+ARN : arn:aws:sns:us-east-1:259072552251:OrderNotifications
+
+ARN : arn:aws:sns:us-east-1:259072552251:OrderAlerts 
+
+=================== 
+
 3.3 Subscribe Your Email to OrderAlerts
 This gives you real-time visibility into every success and failure the Lambda processes.
 
