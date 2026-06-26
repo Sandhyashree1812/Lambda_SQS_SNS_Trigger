@@ -207,13 +207,23 @@ ARN : arn:aws:sns:us-east-1:259072552251:OrderAlerts
 This gives you real-time visibility into every success and failure the Lambda processes.
 
 With OrderAlerts open, click Create subscription.
-Field	Value
-Protocol	Email
-Endpoint	your email address
+Field	: Protocol
+Value : Email
+Endpoint	: your email address
 Click Create subscription.
 
+<img width="797" height="302" alt="image" src="https://github.com/user-attachments/assets/55b2b3b2-c3c0-41f3-bdef-0b4732f36f46" /> 
+
+<img width="721" height="382" alt="image" src="https://github.com/user-attachments/assets/89f5d8ce-5b62-40f1-8c5a-487f5e1d18ec" />
+
+
+
 Check your inbox for a confirmation email from AWS and click Confirm subscription.
+
+
 You will not receive any alerts until you confirm. Check your spam folder if it does not arrive within a minute.
+
+========  
 
 3.4 (Optional) Filter Alerts by Status
 If you only want to receive failure emails — not one for every successful order — add a subscription filter policy:
@@ -227,31 +237,52 @@ Click Save changes. Now your email only receives FAILED alerts; SUCCESS alerts a
 
 The status attribute is set by the Lambda function in MessageAttributes — SUCCESS or FAILED — so SNS can route them differently per subscriber.
 
+============ 
+
 3.5 Subscribe Your Email to OrderNotifications
 This lets you see the business notification that downstream services would receive.
 
 Open OrderNotifications → Create subscription.
 Field	Value
-Protocol	Email
-Endpoint	your email address
+Protocol :	Email
+Endpoint	: your email address
 Click Create subscription and confirm from your inbox.
+
+<img width="757" height="305" alt="image" src="https://github.com/user-attachments/assets/b457220d-2316-4605-a6d3-c81cc6ed9190" /> 
+
+=================================== 
+
 
 3.6 Create a "ProcessedOrders" SQS Queue
 This queue simulates a downstream service (e.g., a fulfillment system) consuming processed-order events.
 
 Go to SQS → Create queue.
 Field	Value
-Type	Standard
-Name	ProcessedOrders
+Type	: Standard
+Name  :	ProcessedOrders
 Click Create queue.
 
+<img width="743" height="377" alt="image" src="https://github.com/user-attachments/assets/5d2d10dd-7e60-44cd-8669-5d70e39d5a35" />
+
+
 Copy the Queue ARN for ProcessedOrders.
+
+ARN : arn:aws:sqs:us-east-1:259072552251:ProcessedOrders
+
+=============================== 
+
 3.7 Subscribe ProcessedOrders Queue to OrderNotifications
 Back in SNS → Topics → OrderNotifications → Create subscription.
 Field	Value
-Protocol	Amazon SQS
-Endpoint	ARN of ProcessedOrders
+Protocol	: Amazon SQS
+Endpoint	: ARN of ProcessedOrders
 Click Create subscription.
+
+<img width="791" height="315" alt="image" src="https://github.com/user-attachments/assets/d8cd280e-1a9b-486e-8453-2dcd032c4a5a" /> 
+
+<img width="802" height="366" alt="image" src="https://github.com/user-attachments/assets/9430bec0-9495-4021-8ca1-e586daee10b0" /> 
+
+================== 
 
 3.8 Add SQS Access Policy for SNS Delivery
 SNS must be allowed to send messages to the ProcessedOrders queue.
@@ -277,7 +308,13 @@ Replace the existing policy with the following (substitute your values):
     }
   ]
 }
-Click Save.
+Click Save. 
+
+<img width="775" height="386" alt="image" src="https://github.com/user-attachments/assets/053958cd-aa08-4882-bd53-c99d1ac04f75" />
+
+<img width="749" height="379" alt="image" src="https://github.com/user-attachments/assets/ca0dae82-23f7-49f5-bef5-d978c6c267b4" />
+
+
 
 What You Created
 OrderNotifications (SNS Topic)  ← business events (success only)
@@ -288,25 +325,37 @@ OrderAlerts (SNS Topic)          ← ops visibility (success + failure)
   └── Email subscription  → your inbox
         (optional filter: status = FAILED)
 
-        Step 4 — Lambda: Create and Deploy the Function
+================== 
+
+
+Step 4 — Lambda: Create and Deploy the Function
 You will create the Lambda function, upload the code, and set the SNS topic ARN as an environment variable.
 
 4.1 Open Lambda
 In the AWS Console, search for Lambda and open it.
 Click Create function.
+
+
 4.2 Basic Configuration
-Field	Value
-Author from scratch	selected
-Function name	OrderProcessor
+Field	Value : Author from scratch	selected
+Function name	: OrderProcessor
 Runtime	Python 3.14
 Architecture	x86_64
+
 4.3 Attach the Execution Role
-Under Permissions → Change default execution role:
+Under Permissions → Change default execution role: 
 
 Field	Value
-Execution role	Use an existing role
-Existing role	OrderProcessorLambdaRole (created in Step 1)
-Click Create function.
+Execution role	: Use an existing role
+Existing role	: OrderProcessorLambdaRole (created in Step 1)
+Click Create function. 
+
+<img width="776" height="346" alt="image" src="https://github.com/user-attachments/assets/23341c0b-daaa-4a3a-b0cd-a9f8c5edf2d2" /> 
+
+<img width="800" height="326" alt="image" src="https://github.com/user-attachments/assets/0a1f7be4-0fa0-4b2f-8af9-5625e842d5fe" />
+
+
+================ 
 
 4.4 Upload the Code
 The Lambda code is saved as handler.py :
@@ -348,15 +397,15 @@ def lambda_handler(event, context):
     """
     Triggered by SQS. Processes each record and publishes results to SNS.
 
-    On success: publishes the processed order to OrderNotifications (business topic)
+  On success: publishes the processed order to OrderNotifications (business topic)
                 and an alert to OrderAlerts (ops topic) with status=SUCCESS.
     On failure: returns the message ID in batchItemFailures so SQS retries it,
                 and publishes an alert to OrderAlerts with status=FAILED.
     """
-    processed = []
-    failed = []
+  processed = []
+  failed = []
 
-    for record in event["Records"]:
+   for record in event["Records"]:
         message_id = record["messageId"]
         try:
             body = json.loads(record["body"])
@@ -364,7 +413,7 @@ def lambda_handler(event, context):
             customer = body.get("customer", "Unknown Customer")
             amount = body.get("amount", 0)
 
-            notification = {
+   notification = {
                 "orderId": order_id,
                 "customer": customer,
                 "amount": amount,
@@ -372,8 +421,8 @@ def lambda_handler(event, context):
                 "message": f"Order {order_id} for {customer} (${amount}) has been processed.",
             }
 
-            # Publish to business downstream topic
-            sns_client.publish(
+   # Publish to business downstream topic
+   sns_client.publish(
                 TopicArn=SNS_TOPIC_ARN,
                 Subject=f"Order Processed: {order_id}",
                 Message=json.dumps(notification),
@@ -385,8 +434,8 @@ def lambda_handler(event, context):
                 },
             )
 
-            # Publish success alert to ops topic
-            _publish_alert(
+   # Publish success alert to ops topic
+   _publish_alert(
                 status="SUCCESS",
                 subject=f"SUCCESS: Order {order_id} processed",
                 payload={
@@ -398,14 +447,14 @@ def lambda_handler(event, context):
                 },
             )
 
-            print(f"Published SNS notification for order {order_id}")
-            processed.append(message_id)
+   print(f"Published SNS notification for order {order_id}")
+   processed.append(message_id)
 
-        except Exception as e:
-            print(f"Failed to process message {message_id}: {e}")
+   except Exception as e:
+   print(f"Failed to process message {message_id}: {e}")
 
-            # Publish failure alert to ops topic before returning batchItemFailures
-            _publish_alert(
+ # Publish failure alert to ops topic before returning batchItemFailures
+  _publish_alert(
                 status="FAILED",
                 subject=f"FAILED: Message processing error ({message_id})",
                 payload={
@@ -417,16 +466,16 @@ def lambda_handler(event, context):
                 },
             )
 
-            # Returning a batchItemFailures response tells SQS to retry only
-            # the failed messages rather than the entire batch.
-            failed.append({"itemIdentifier": message_id})
+  # Returning a batchItemFailures response tells SQS to retry only
+  # the failed messages rather than the entire batch.
+   failed.append({"itemIdentifier": message_id})
 
-    print(f"Processed: {len(processed)}, Failed: {len(failed)}")
+   print(f"Processed: {len(processed)}, Failed: {len(failed)}")
 
-    if failed:
+   if failed:
         return {"batchItemFailures": failed}
 
-    return {"statusCode": 200, "body": f"Processed {len(processed)} message(s)"}
+   return {"statusCode": 200, "body": f"Processed {len(processed)} message(s)"}
 
 
 
@@ -458,6 +507,9 @@ If you uploaded handler.py:
 Click Configuration tab → General configuration → Edit.
 Set Handler to handler.lambda_handler.
 Click Save.
+
+=================== 
+
 4.6 Set Environment Variables
 Click Configuration tab → Environment variables → Edit.
 Add both variables using Add environment variable:
